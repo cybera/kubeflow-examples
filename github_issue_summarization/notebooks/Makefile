@@ -44,12 +44,12 @@ MODEL_GCS := gs://kubeflow-examples-data/gh_issue_summarization/model/v20180426
 # make PROJECT=kubeflow-examples <target>
 PROJECT := kubeflow-examples
 
-IMG := gcr.io/$(PROJECT)/tf-job-issue-summarization
-IMG_ESTIMATOR := gcr.io/$(PROJECT)/tf-job-issue-summarization-estimator
+IMG := $(PROJECT)/tf-job-issue-summarization
+IMG_ESTIMATOR := $(PROJECT)/tf-job-issue-summarization-estimator
 
 # gcr.io is prepended automatically by Seldon's builder.
-MODEL_IMG_NAME := $(PROJECT)/issue-summarization-model
-MODEL_IMG := gcr.io/$(MODEL_IMG_NAME)
+MODEL_IMG_NAME := issue-summarization-model
+MODEL_IMG := $(PROJECT)/$(MODEL_IMG_NAME)
 
 echo:
 	@echo changed files $(CHANGED_FILES)
@@ -57,7 +57,7 @@ echo:
 	@echo BUILD_DIR=$(BUILD_DIR)
 
 push: build
-	gcloud docker -- push $(IMG):$(TAG)
+	docker push $(IMG):$(TAG)
 
 set-image: push
 	# Set the image to use
@@ -71,15 +71,15 @@ build:
 
 $(BUILD_DIR)/body_pp.dpkl:
 	mkdir -p $(BUILD_DIR)
-	gsutil cp $(MODEL_GCS)/body_pp.dpkl $(BUILD_DIR)/
+	cp ../body_pp.dpkl $(BUILD_DIR)/
 
 $(BUILD_DIR)/title_pp.dpkl:
 	mkdir -p $(BUILD_DIR)
-	gsutil cp $(MODEL_GCS)/title_pp.dpkl $(BUILD_DIR)/
+	cp ../title_pp.dpkl $(BUILD_DIR)/
 
 $(BUILD_DIR)/seq2seq_model_tutorial.h5:
 	mkdir -p $(BUILD_DIR)
-	gsutil cp $(MODEL_GCS)/seq2seq_model_tutorial.h5 $(BUILD_DIR)/
+	cp ../seq2seq_model_tutorial.h5 $(BUILD_DIR)/
 
 # Copy python files into the model directory
 # so that we can mount a single directory into the container
@@ -102,9 +102,9 @@ stop-docker-model-image:
 test-model-image_local:
 	curl -g http://localhost:5000/predict --data-urlencode 'json={"data":{"ndarray":[["try to stop flask from using multiple threads"]]}}'
 
-push-model-image: 
+push-model-image:
 	echo pushing $(MODEL_IMG):$(TAG)
-	gcloud docker -- push $(MODEL_IMG):$(TAG)
+	docker push $(MODEL_IMG):$(TAG)
 
 set-model-image: push-model-image
 	# Set the image to use
@@ -117,7 +117,7 @@ build-estimator:
 	@echo Built $(IMG_ESTIMATOR):$(TAG)
 
 push-estimator: build-estimator
-	gcloud docker -- push $(IMG_ESTIMATOR):$(TAG)
+	docker push $(IMG_ESTIMATOR):$(TAG)
 	@echo Pushed $(IMG_ESTIMATOR):$(TAG)
 
 .PHONY: clean

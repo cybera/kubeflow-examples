@@ -4,74 +4,33 @@ In this section, you will setup Kubeflow on an existing Kubernetes cluster.
 
 ## Requirements
 
-*   A Kubernetes cluster
-    * To create a cluster, follow the instructions on the
-      [Set up Kubernetes](https://www.kubeflow.org/docs/started/getting-started/#set-up-kubernetes)
-      section of the Kubeflow Getting Started guide. We recommend using a
-      managed service such as Google Kubernetes Engine (GKE).
-      [This link](https://www.kubeflow.org/docs/started/getting-started-gke/)
-      guides you through the process of using either
-      [Click-to-Deploy](https://deploy.kubeflow.cloud/#/deploy) (a web-based UI) or
-      [`kfctl`](https://github.com/kubeflow/kubeflow/blob/master/scripts/kfctl.sh)
-      (a CLI tool) to generate a GKE cluster with all Kubeflow components
-      installed. Note that there is no need to complete the Deploy Kubeflow steps
-      below if you use either of these two tools.
-*   The Kubernetes CLI `kubectl` pointing to the kubernetes cluster
-    *   Make sure that you can run `kubectl get nodes` from your terminal
-        successfully
-*   The ksonnet CLI [`ks`](https://ksonnet.io/#get-started), v0.9.2 or higher:
-    * In case you want to install a particular version of ksonnet, you can run
-    
-        ```bash
-        export KS_VER=0.13.1
-        export KS_BIN=ks_${KS_VER}_linux_amd64
-        wget -O /tmp/${KS_BIN}.tar.gz https://github.com/ksonnet/ksonnet/releases/download/v${KS_VER}/${KS_BIN}.tar.gz
-        mkdir -p ${HOME}/bin
-        tar -xvf /tmp/${KS_BIN}.tar.gz -C ${HOME}/bin
-        export PATH=$PATH:${HOME}/bin/${KS_BIN}
-        ```
+* brew update && brew install azure-cli
+* brew install source-to-image
+* brew install ksonnet/tap/ks
+* brew install kubernetes-cli
+* pip3 install https://storage.googleapis.com/ml-pipeline/release/0.1.12/kfp.tar.gz --upgrade
 
-## Kubeflow setup
+Then log in to Azure:
 
-Refer to the [guide](https://www.kubeflow.org/docs/started/getting-started/) for
-detailed instructions on how to setup Kubeflow on your Kubernetes cluster.
-Specifically, complete the following sections:
+```
+az login
+```
 
+Deploy the Azure cluster:
 
-* [Deploy Kubeflow](https://www.kubeflow.org/docs/other-guides/advanced/)
-    * The latest version that was tested with this walkthrough was v0.4.0-rc.2.
-    * The [`kfctl`](https://github.com/kubeflow/kubeflow/blob/master/scripts/kfctl.sh)
-      CLI tool can be used to install Kubeflow on an existing cluster. Follow
-      [this guide](https://www.kubeflow.org/docs/started/getting-started/#kubeflow-quick-start)
-      to use `kfctl` to generate a ksonnet app, create Kubeflow manifests, and
-      install all default components onto an existing Kubernetes cluster. Note
-      that you can likely skip this step if you used
-      [Click-to-Deploy](https://deploy.kubeflow.cloud/#/deploy)
-      or `kfctl` to generate your cluster.
+```
+make azure/setup
+```
 
-* [Setup a persistent disk](https://www.kubeflow.org/docs/guides/advanced/)
+Once the cluster is running:
 
-    * We need a shared persistent disk to store our training data since
-      containers' filesystems are ephemeral and don't have a lot of storage space.
-
-    * For this example, provision a `10GB` cluster-wide shared NFS mount with the
-      name `github-issues-data`.
-
-    * After the NFS is ready, delete the `jupyter-0` pod so that it gets recreated and
-      picks up the NFS mount. You can delete it by running `kubectl delete pod
-      jupyter-0 -n=${NAMESPACE}`
-
-* [Bringing up a
-Notebook](https://www.kubeflow.org/docs/guides/components/jupyter/)
-
-    * When choosing an image for your cluster in the JupyterHub UI, use the
-      image from this example:
-      [`gcr.io/kubeflow-dev/issue-summarization-notebook-cpu:latest`](https://github.com/kubeflow/examples/blob/master/github_issue_summarization/workflow/Dockerfile).
-
+```
+make kubeflow/setup
+```
 
 After completing that, you should have the following ready:
 
-* A ksonnet app in a directory named `ks_app`
+* A ksonnet app in a directory named `kf/ks_app`
 * An output similar to this for `kubectl -n kubeflow get pods` command
 
 ```bash
@@ -111,9 +70,50 @@ whoami-app-7b575b555d-85nb8                               1/1       Running     
 workflow-controller-5c95f95f58-hprd5                      1/1       Running        0          3m
 ```
 
-*   A Jupyter Notebook accessible at http://127.0.0.1:8000
-*   A 10GB mount `/mnt/github-issues-data` in your Jupyter Notebook pod. Check this
-    by running `!df` in your Jupyter Notebook.
+## Port Forwarding
+
+Run:
+
+```
+make forward/dashboard
+```
+
+And then access http://localhost:8080 in a web browser.
+
+Confirm you can see a dashboard.
+
+## Launch a Jupyter Notebook;
+
+* Click on Notebooks.
+* Change the namespace to "kubeflow"
+* Click the +
+* Name the notebook something like `user1`
+* Choose the `tensorflow-1.12.0-notebook-gpu:v0.5.0` image.
+* Change CPU to 1
+* Change Memory to 2.0Gi
+* Set Extra Resources to `{"nvidia.com/gpu":"1"}`
+* Click Spawn
+
+Back in your terminal, wait until the notebook has launched:
+
+```
+make k8s/pods
+```
+
+You will initially see:
+
+```
+user1-0                                                     0/1     ContainerCreating   0          30s
+```
+
+Wait until it's:
+
+```
+user1-0                                                     1/1     Running   0          55s
+```
+
+Then in the web browser, click the three dots under Actions and choose "Connect"
+
 
 ## Summary
 

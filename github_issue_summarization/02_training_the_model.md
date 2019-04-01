@@ -8,7 +8,7 @@ Open the Jupyter notebook interface and create a new Terminal by clicking on
 menu, *New -> Terminal*. In the Terminal, clone this git repo by executing:
 
 ```bash
-git clone https://github.com/kubeflow/examples.git
+git clone https://github.com/cybera/kubeflow-examples.git
 ```
 
 Now you should have all the code required to complete training in the `examples/github_issue_summarization/notebooks` folder. Navigate to this folder.
@@ -37,11 +37,7 @@ The following files are needed for serving results:
 If you haven't already, clone the [kubeflow/examples](https://github.com/kubeflow/examples) repo locally, then issue the following commands to place these three files into the `github_issue_summarization/notebooks` folder on your local machine:
 
 ```
-cd github_issue_summarization/notebooks
-PODNAME=`kubectl get pods --namespace=${NAMESPACE} --selector="app=jupyterhub" --output=template --template="{{with index .items 0}}{{.metadata.name}}{{end}}"`
-kubectl --namespace=${NAMESPACE} cp ${PODNAME}:/home/jovyan/examples/github_issue_summarization/notebooks/seq2seq_model_tutorial.h5 .
-kubectl --namespace=${NAMESPACE} cp ${PODNAME}:/home/jovyan/examples/github_issue_summarization/notebooks/body_pp.dpkl .
-kubectl --namespace=${NAMESPACE} cp ${PODNAME}:/home/jovyan/examples/github_issue_summarization/notebooks/title_pp.dpkl .
+make example1/model/download NAME=notebook-name
 ```
 
 _(Optional)_ You can also perform training with two alternate methods:

@@ -19,51 +19,27 @@ You have two options for getting a model server
 
 ## Wrap the model into a Seldon Core microservice
 
-Set a couple of environment variables to specify the GCP Project and the TAG you want to build the image for:
+You will need [s2i](https://github.com/openshift/source-to-image) installed:
 
 ```
-PROJECT=my-gcp-project
-TAG=0.1
+brew install source-to-image
 ```
 
-cd into the notebooks directory and run the following command (you will need [s2i](https://github.com/openshift/source-to-image) installed):
+Then run:
 
 ```
-cd notebooks/
-make build-model-image PROJECT=${PROJECT} TAG=${TAG}
+make example1/model/build-image DOCKER_USERNAME=username TAG=0.1
 ```
 
 This will use [S2I](https://github.com/openshift/source-to-image)  to wrap the inference code in `IssueSummarization.py` so it can be run and managed by Seldon Core.
 
 
-Now you should see an image named `gcr.io/<gcr-repository-name>/issue-summarization:0.1` in your docker images. To test the model, you can run it locally using:
-
-```
-make start-docker-model-image PROJECT=${PROJECT} TAG=${TAG}
-```
-
-To send an example payload to the server run:
-
-```
-make test-model-image_local
-```
-
-or you can run a curl command explicitly such as:
-
-```
-curl -g http://localhost:5000/predict --data-urlencode 'json={"data":{"ndarray":[["try to stop flask from using multiple threads"]]}}'
-```
-
-To stop the running server run:
-
-```
-make stop-docker-model-image
-```
+Now you should see an image named `<username>/issue-summarization:0.1` in your docker images.
 
 You can push the image by running:
 
 ```
-make push-model-image PROJECT=${PROJECT} TAG=${TAG}
+make example1/model/push-image DOCKER_USERNAME=username TAG=0.1
 ```
 
 > You can find more details about wrapping a model with seldon-core [here](https://github.com/SeldonIO/seldon-core/blob/master/docs/wrappers/python.md)
@@ -73,52 +49,13 @@ make push-model-image PROJECT=${PROJECT} TAG=${TAG}
 
 Now that we have an image with our model server, we can deploy it to our kubernetes cluster. We need to first deploy seldon-core to our cluster.
 
-## Deploy Seldon Core
-
-
-Install the CRD and its controller using the seldon prototype. If you used
-`kfctl` to install Kubeflow, seldon is already included and you can run
-the following commands (if not, follow the
-[quick start](https://www.kubeflow.org/docs/started/getting-started/#kubeflow-quick-start)
-instructions to generate the k8s manifests first):
-
-```bash
-cd ks_app
-# Generate the seldon component and deploy it
-ks generate seldon seldon --namespace=${NAMESPACE}
-ks apply ${KF_ENV} -c seldon
-```
-
-Seldon Core should now be running on your cluster. You can verify it by running
-`kubectl get pods -n${NAMESPACE}`. You should see two pods named
-`seldon-seldon-cluster-manager-*` and `seldon-redis-*`.
-
 ## Deploying the actual model
 
 Now that you have seldon core deployed, you can deploy the model using the
 `seldon-serve-simple-v1alpha2` prototype.
 
-```bash
-ks generate seldon-serve-simple-v1alpha2 issue-summarization-model \
-  --name=issue-summarization \
-  --image=gcr.io/${PROJECT}/issue-summarization-model:${TAG} \
-  --replicas=2
-ks apply ${KF_ENV} -c issue-summarization-model
 ```
-
-The model can take quite some time to become ready due to the loading times of the models and may be restarted if it fails the default liveness probe. If this happens you can add a custom livenessProbe to the issue-summarization.jsonnet file. Add the below to the container section:
-
-```
-   "livenessProbe": {
-      "failureThreshold": 3,
-      "initialDelaySeconds": 30,
-      "periodSeconds": 5,
-      "successThreshold": 1,
-         "handler" : {
-	    "tcpSocket": {
-               "port": "http"
-             }
-      },
+make example1/model/serve-image DOCKER_USERNAME=username TAG=0.1
 ```
 
 # Sample request and response
@@ -126,9 +63,10 @@ The model can take quite some time to become ready due to the loading times of t
 Seldon Core uses ambassador to route its requests. To send requests to the model, you can port-forward the ambassador container locally:
 
 ```
-kubectl port-forward svc/ambassador -n ${NAMESPACE} 8080:80
+make forward/dashboard
 ```
 
+Then run:
 
 ```
 curl -X POST -H 'Content-Type: application/json' -d '{"data":{"ndarray":[["issue overview add a new property to disable detection of image stream files those ended with -is.yml from target directory. expected behaviour by default cube should not process image stream files if user does not set it. current behaviour cube always try to execute -is.yml files which can cause some problems in most of cases, for example if you are using kuberentes instead of openshift or if you use together fabric8 maven plugin with cube"]]}}' http://localhost:8080/seldon/issue-summarization/api/v0.1/predictions
