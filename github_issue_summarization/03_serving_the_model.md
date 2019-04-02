@@ -19,27 +19,20 @@ You have two options for getting a model server
 
 ## Wrap the model into a Seldon Core microservice
 
-You will need [s2i](https://github.com/openshift/source-to-image) installed:
+Run:
 
 ```
-brew install source-to-image
-```
-
-Then run:
-
-```
-make example1/model/build-image DOCKER_USERNAME=username TAG=0.1
+make github/model/build-image DOCKER_USERNAME=username TAG=0.1
 ```
 
 This will use [S2I](https://github.com/openshift/source-to-image)  to wrap the inference code in `IssueSummarization.py` so it can be run and managed by Seldon Core.
-
 
 Now you should see an image named `<username>/issue-summarization:0.1` in your docker images.
 
 You can push the image by running:
 
 ```
-make example1/model/push-image DOCKER_USERNAME=username TAG=0.1
+make github/model/push-image DOCKER_USERNAME=username TAG=0.1
 ```
 
 > You can find more details about wrapping a model with seldon-core [here](https://github.com/SeldonIO/seldon-core/blob/master/docs/wrappers/python.md)
@@ -55,7 +48,7 @@ Now that you have seldon core deployed, you can deploy the model using the
 `seldon-serve-simple-v1alpha2` prototype.
 
 ```
-make example1/model/serve-image DOCKER_USERNAME=username TAG=0.1
+make github/model/serve-image DOCKER_USERNAME=username TAG=0.1
 ```
 
 # Sample request and response

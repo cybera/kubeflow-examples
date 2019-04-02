@@ -9,6 +9,7 @@ In this section, you will setup Kubeflow on an existing Kubernetes cluster.
 * brew install ksonnet/tap/ks
 * brew install kubernetes-cli
 * pip3 install https://storage.googleapis.com/ml-pipeline/release/0.1.12/kfp.tar.gz --upgrade
+* A Docker hub account with Docker installed on your workstation
 
 Then log in to Azure:
 
@@ -19,7 +20,7 @@ az login
 Deploy the Azure cluster:
 
 ```
-make azure/setup
+make azure/setup NAME=jdoe
 ```
 
 Once the cluster is running:

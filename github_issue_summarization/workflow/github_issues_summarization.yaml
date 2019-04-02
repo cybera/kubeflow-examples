@@ -83,14 +83,15 @@ spec:
       - name: input
         path: /mnt/workspace/data/issues.csv.gz
         s3:
-          endpoint: storage.googleapis.com
+          endpoint: minio-service.kubeflow:9000
+          insecure: true
           bucket: "{{workflow.parameters.bucket}}"
           key: "{{workflow.parameters.bucket-key}}"
           accessKeySecret:
-            name: gcs-accesskey
+            name: minio-creds
             key: accesskey
           secretKeySecret:
-            name: gcs-accesskey
+            name: minio-creds
             key: secretkey
     outputs:
       artifacts:

@@ -1,8 +1,9 @@
 FROM python:3.6
-COPY ./workspace/src /workspace/src/ 
+COPY ./workspace/src /workspace/src/
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python-pandas \
     && pip3 install -U scikit-learn \
+    && pip3 install -U textacy==0.6.2 \
     && pip3 install -U ktext \
     && pip3 install -U IPython \
     && pip3 install -U annoy \
