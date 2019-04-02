@@ -19,8 +19,7 @@ Ensure that your model is live and listening for HTTP requests as described in
 To build the front-end docker image, issue the following commands:
 
 ```bash
-cd docker
-docker build -t gcr.io/gcr-repository-name/issue-summarization-ui:0.1 .
+make example1/ui/build
 ```
 
 ## Store the front-end docker image
