@@ -8,45 +8,20 @@
 Build the TensorFlow object detection training image, or use the pre-built image `lcastell/pets_object_detection` in Docker hub.
 
 ## To build the image:
-First copy the Dockerfile file from `./docker` directory into your $HOME path
-```
-# from your $HOME directory
-docker build --pull -t $USER/pets_object_detection -f ./Dockerfile.training .
-```
 
-### Push the image to your docker registry
 ```
-# from your $HOME directory
-docker tag  $USER/pets_object_detection  <your_server:your_port>/pets_object_detection
-docker push <your_server:your_port>/pets_object_detection
+make pets/tf/image
 ```
 
 ## Create  training TF-Job deployment and launching it
 
+> Note: This command uses the pre-build image. Modify the `Makefile` task to use the image you made above.
+
 ```
-# from the ks-app directory
-
-PIPELINE_CONFIG_PATH="${MOUNT_PATH}/faster_rcnn_resnet101_pets.config"
-TRAINING_DIR="${MOUNT_PATH}/train"
-
-ks param set tf-training-job image ${OBJ_DETECTION_IMAGE}
-ks param set tf-training-job mountPath ${MOUNT_PATH}
-ks param set tf-training-job pvc ${PVC}
-ks param set tf-training-job numPs 1
-ks param set tf-training-job numWorkers 1
-ks param set tf-training-job pipelineConfigPath ${PIPELINE_CONFIG_PATH}
-ks param set tf-training-job trainDir ${TRAINING_DIR}
-
-ks apply ${ENV} -c tf-training-job
+make pets/tf/deploy
 ```
 
-For GPU support set the `numGpu` param like:
-```
-# from the ks-app directory
-ks param set tf-training-job numGpu 1
-```
-
-Here is a quick description for the `tf-training-job` component parameters:
+Here is a quick description for the `tf-training-job` component parameters used in the `Makefile` task:
 
 - `image` string, docker image to use
 - `mountPath` string, Volume mount path

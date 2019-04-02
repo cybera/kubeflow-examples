@@ -10,7 +10,7 @@ Refer to the [getting started guide](https://www.kubeflow.org/docs/started/getti
 For this example, we will be using ks `nocloud` environment (on premise K8s). If you plan to use `cloud` ks environment, please make sure you follow the proper instructions in the kubeflow getting started guide.
 
 After completing the steps in the kubeflow getting started guide you will have the following:
-- A ksonnet app directory called `my-kubeflow` 
+- A ksonnet app directory called `my-kubeflow`
 - A new namespace in you K8s cluster called `kubeflow`
 - The following pods in your kubernetes cluster in the `kubeflow` namespace:
 ```
@@ -40,13 +40,6 @@ customizations.
 
 Let's make use of the app to continue with the tutorial.
 
-```
-cd ks-app
-ENV=default
-ks env add ${ENV} --context=`kubectl config current-context`
-ks env set ${ENV} --namespace kubeflow
-```
-
 ## Preparing the training data
 
 **Note:** TensorFlow works with many file systems like HDFS and S3, you can use
@@ -55,10 +48,7 @@ them to push the dataset and other configurations there and skip the Download an
 First let's create a PVC to store the data.
 
 ```
-# First, lets configure and apply the pets-pvc to create a PVC where the training data will be stored
-ks param set pets-pvc accessMode "ReadWriteMany"
-ks param set pets-pvc storage "20Gi"
-ks apply ${ENV} -c pets-pvc
+make pets/pvc/create
 ```
 
 The command above will create a PVC with `ReadWriteMany` access mode if your Kubernetes cluster
@@ -89,29 +79,12 @@ If your cluster doesn't have defined default storageclass, you can create a [Per
 Now we will get the data we need to prepare our training pipeline:
 
 ```
-# Configure and apply the get-data-job component this component will download the dataset,
-# annotations, the model we will use for the fine tune checkpoint, and
-# the pipeline configuration file
-
-PVC="pets-pvc"
-MOUNT_PATH="/pets_data"
-DATASET_URL="http://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz"
-ANNOTATIONS_URL="http://www.robots.ox.ac.uk/~vgg/data/pets/data/annotations.tar.gz"
-MODEL_URL="http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_coco_2018_01_28.tar.gz"
-PIPELINE_CONFIG_URL="https://raw.githubusercontent.com/kubeflow/examples/master/object_detection/conf/faster_rcnn_resnet101_pets.config"
-
-ks param set get-data-job mounthPath ${MOUNT_PATH}
-ks param set get-data-job pvc ${PVC}
-ks param set get-data-job urlData ${DATASET_URL}
-ks param set get-data-job urlAnnotations ${ANNOTATIONS_URL}
-ks param set get-data-job urlModel ${MODEL_URL}
-ks param set get-data-job urlPipelineConfig ${PIPELINE_CONFIG_URL}
-
-ks apply ${ENV} -c get-data-job
+make pets/data/create
 ```
-The downloaded files will be dumped into the `MOUNT_PATH`
 
-Here is a quick description for the `get-data-job` component parameters:
+The downloaded files will be dumped into the `/pets_data`
+
+Here is a quick description for the `get-data-job` component parameters used in the `Makefile` task:
 
 - `mountPath` string, volume mount path.
 - `pvc` string, name of the PVC where the data will be stored.
@@ -123,25 +96,24 @@ Here is a quick description for the `get-data-job` component parameters:
 **NOTE:** The annotations are the result of labeling your dataset using some manual labeling tool. For this example we will use
 a set of annotations generated specifically for the dataset we are using for training.
 
-Before moving to the next set of commands make sure all of the jobs to get the data were completed.
+Before moving to the next set of commands make sure all of the jobs to get the data were completed:
+
+```
+make k8s/pods
+
+get-data-job-annotations-g879d                              0/1     Completed   0          3m51s
+get-data-job-config-lgdbh                                   0/1     Completed   0          3m51s
+get-data-job-dataset-dfx5s                                  0/1     Completed   0          3m51s
+get-data-job-model-r2qc5                                    0/1     Completed   0          3m51s
+```
 
 Now we will configure and apply the `decompress-data-job` component:
 
 ```
-ANNOTATIONS_PATH="${MOUNT_PATH}/annotations.tar.gz"
-DATASET_PATH="${MOUNT_PATH}/images.tar.gz"
-PRE_TRAINED_MODEL_PATH="${MOUNT_PATH}/faster_rcnn_resnet101_coco_2018_01_28.tar.gz"
-
-ks param set decompress-data-job mountPath ${MOUNT_PATH}
-ks param set decompress-data-job pvc ${PVC}
-ks param set decompress-data-job pathToAnnotations ${ANNOTATIONS_PATH}
-ks param set decompress-data-job pathToDataset ${DATASET_PATH}
-ks param set decompress-data-job pathToModel ${PRE_TRAINED_MODEL_PATH}
-
-ks apply ${ENV} -c decompress-data-job
+make pets/data/decompress
 ```
 
-Here is a quick description for the `decompress-data-job` component parameters:
+Here is a quick description for the `decompress-data-job` component parameters used in the `Makefile` task:
 
 - `mountPath` string, volume mount path.
 - `pvc` string, name of the PVC where the data is located.
@@ -149,24 +121,24 @@ Here is a quick description for the `decompress-data-job` component parameters:
 - `pathToDataset` string, File system path to the dataset .tar.gz file
 - `pathToModel` string, File system path to the pre-trained model .tar.gz file
 
+Before moving on to the next set of commands, make sure all of the jobs to decompress the data were completed:
+
+```
+make k8s/pods
+
+decompress-data-job-annotations-4cxc2                       0/1     Completed   0          36m
+decompress-data-job-dataset-rhh9v                           0/1     Completed   0          36m
+decompress-data-job-model-jrv6t                             0/1     Completed   0          36m
+```
+
 Finally, and since TensorFlow Object Detection API uses the [TFRecord format](https://www.tensorflow.org/api_guides/python/python_io#tfrecords_format_details)
 we need to create the TF pet records. For that, we wil configure and apply the `create-pet-record-job` component:
 
 ```
-OBJ_DETECTION_IMAGE="lcastell/pets_object_detection"
-DATA_DIR_PATH="${MOUNT_PATH}"
-OUTPUT_DIR_PATH="${MOUNT_PATH}"
-
-ks param set create-pet-record-job image ${OBJ_DETECTION_IMAGE}
-ks param set create-pet-record-job dataDirPath ${DATA_DIR_PATH}
-ks param set create-pet-record-job outputDirPath ${OUTPUT_DIR_PATH}
-ks param set create-pet-record-job mountPath ${MOUNT_PATH}
-ks param set create-pet-record-job pvc ${PVC}
-
-ks apply ${ENV} -c create-pet-record-job
+make pets/data/record
 ```
 
-Here is a quick description for the `create-pet-record-job` component parameters:
+Here is a quick description for the `create-pet-record-job` component parameters used in the `Makefile` task:
 
 - `mountPath` string, volume mount path.
 - `pvc` string, name of the PVC where the data is located.
@@ -175,6 +147,15 @@ Here is a quick description for the `create-pet-record-job` component parameters
 - `outputDirPath` string, the output directory for the pet records.
 
 To see the default values of the components used in this set of steps look at: [params.libsonnet](./ks-app/components/params.libsonnet)
+
+Before moving on to the next set of commands, make sure all of the record jobs were completed:
+
+```
+make k8s/pods
+
+
+create-pet-record-job-c4vm7                                 0/1     Completed   0          9m
+```
 
 ## Next
 [Submit the TF Job](submit_job.md)

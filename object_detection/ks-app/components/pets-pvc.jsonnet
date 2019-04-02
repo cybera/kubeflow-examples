@@ -12,6 +12,7 @@ local pvc = {
   },
   spec:{
     accessModes: [params.accessMode],
+    storageClassName: params.storageClassName,
     volumeMode: "Block",
     resources: {
       requests: {

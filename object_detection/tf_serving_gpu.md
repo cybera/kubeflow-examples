@@ -9,42 +9,39 @@ Alternatively, you can do the following to deploy kubeflow and get a model.
 Reference
 [blog](https://cloud.google.com/blog/big-data/2017/09/performing-prediction-with-tensorflow-object-detection-models-on-google-cloud-machine-learning-engine)
 
-### Deploy Kubeflow
-Follow getting started
-[guide](https://www.kubeflow.org/docs/started/getting-started/) to deploy
-kubeflow.
-
-### Prepare model
-Download a model from [model zoo](https://github.com/tensorflow/models/blob/master/research/object_detection/g3doc/detection_model_zoo.md).
-The model should be in SavedModel format (including a `saved_model.pb` file and a
-optional `variables/` folder.
-
-```
-wget http://download.tensorflow.org/models/object_detection/faster_rcnn_nas_coco_2018_01_28.tar.gz
-tar -xzf faster_rcnn_nas_coco_2018_01_28.tar.gz
-gsutil cp faster_rcnn_nas_coco_2018_01_28/saved_model/saved_model.pb gs://YOUR_BUCKET/YOUR_MODEL/1/
-```
-
-Or you can use the above model uploaded at `gs://kubeflow-examples-data/object-detection-coco/`.
-
 ## Deploy serving component
 
-After deploying Kubeflow, you should have a ksonnet app; cd to that directory.
-```
-cd YOUR_KS_APP  # you can use the ks-app in this dir.
-ks pkg install kubeflow/tf-serving  # If you haven't done it
+> Note: If you have a limited amount of GPUs, you will need to delete some previous jobs before continuing:
+>
+> kubectl -n kubeflow delete job create-pet-record-job
+> kubectl -n kubeflow delete job export-tf-graph-job
+> kubectl -n kubeflow delete tfjob tf-training-job
 
-ks generate tf-serving model1 --name=coco
-ks param set model1 modelPath gs://YOUR_BUCKET/YOUR_MODEL/
-ks param set model1 numGpus 1
-ks param set model1 deployHttpProxy true
-ks apply $ENV -c model1
+```
+make tf/serve NAME=model1 MODEL_PATH=exported_graphs/frozen_inference_graph.pb PVC=pets-pvc
 ```
 
 ## Send prediction
+
+> Before you run the following, you need to have the following Python modules installed:
+>
+> pip3 install numpy
+> pip3 install pil
+> pip3 install PIL
+> pip3 install Pillow
+> pip3 install matplotlib
+> pip3 install tensorflow
+>
+
+Forward traffic to the model server:
+
 ```
-cd serving_script
-python predict.py --url=YOUR_KF_HOST/models/coco
+make forward/tf NAME=model1
+```
+
+```
+cd examples/object_detection/serving_script serving_script
+python predict.py --url=localhost:8000/model/coco:predict
 ```
 
 If you expose the TF Serving service as a LoadBalancer, change the url to
