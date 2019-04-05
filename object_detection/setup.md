@@ -1,27 +1,4 @@
 ## Setup Kubeflow
-### Requirements
-
- - Kubernetes cluster
- - Access to a working `kubectl` (Kubernetes CLI)
- - Ksonnet CLI: [ks](https://ksonnet.io/)
-
-### Setup
-Refer to the [getting started guide](https://www.kubeflow.org/docs/started/getting-started) for instructions on how to setup kubeflow on your kubernetes cluster. Specifically, look at the [quick start](https://www.kubeflow.org/docs/started/getting-started/#quick-start) section.
-For this example, we will be using ks `nocloud` environment (on premise K8s). If you plan to use `cloud` ks environment, please make sure you follow the proper instructions in the kubeflow getting started guide.
-
-After completing the steps in the kubeflow getting started guide you will have the following:
-- A ksonnet app directory called `my-kubeflow`
-- A new namespace in you K8s cluster called `kubeflow`
-- The following pods in your kubernetes cluster in the `kubeflow` namespace:
-```
-$ kubectl -n kubeflow get pods
-NAME                                      READY     STATUS    RESTARTS   AGE
-ambassador-7987df44b9-4pht8               2/2       Running   0          1m
-ambassador-7987df44b9-dh5h6               2/2       Running   0          1m
-ambassador-7987df44b9-qrgsm               2/2       Running   0          1m
-tf-hub-0                                  1/1       Running   0          1m
-tf-job-operator-v1alpha2-b76bfbdb-lgbjw   1/1       Running   0          1m
-```
 
 ## Overview
 
@@ -50,31 +27,6 @@ First let's create a PVC to store the data.
 ```
 make pets/pvc/create
 ```
-
-The command above will create a PVC with `ReadWriteMany` access mode if your Kubernetes cluster
-does not support this feature you can modify the `accessMode` value to create the PVC in `ReadWriteOnce`
-and before you execute the tf-job to train the model add a `nodeSelector:` configuration to execute the pods
-in the same node. You can find more about assigning pods to specific nodes [here](https://kubernetes.io/docs/concepts/configuration/assign-pod-node/)
-
-This step assumes that your K8s cluster has [Dynamic Volume Provisioning](https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/) enabled and
-the default Storage Class is created. You can check if the assumption is ready like below (a storageclass with `(default)` notation need exist):
-
-```
-$ kubectl get storageclass
-NAME                 PROVISIONER               AGE
-standard (default)   kubernetes.io/gce-pd      1d
-gold                 kubernetes.io/gce-pd      1d
-```
-
-Otherwise you can find that the PVC remains `Pending` status.
-
-```
-$ kubectl get pvc pets-pvc -n kubeflow
-NAME        STATUS    VOLUME    CAPACITY   ACCESS MODES   STORAGECLASS   AGE
-pets-pvc    Pending                                                      28s
-```
-
-If your cluster doesn't have defined default storageclass, you can create a [PersistentVolume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) manually to make the PVC work.
 
 Now we will get the data we need to prepare our training pipeline:
 
@@ -107,6 +59,14 @@ get-data-job-dataset-dfx5s                                  0/1     Completed   
 get-data-job-model-r2qc5                                    0/1     Completed   0          3m51s
 ```
 
+You can see the status of the `Running` jobs by doing:
+
+```
+make k8s/logs NAME=get-data-job-dataset-zd94m
+```
+
+But change the name to the unique name of the pod in your cluster.
+
 Now we will configure and apply the `decompress-data-job` component:
 
 ```
@@ -130,6 +90,8 @@ decompress-data-job-annotations-4cxc2                       0/1     Completed   
 decompress-data-job-dataset-rhh9v                           0/1     Completed   0          36m
 decompress-data-job-model-jrv6t                             0/1     Completed   0          36m
 ```
+
+It will take around 15 minutes total.
 
 Finally, and since TensorFlow Object Detection API uses the [TFRecord format](https://www.tensorflow.org/api_guides/python/python_io#tfrecords_format_details)
 we need to create the TF pet records. For that, we wil configure and apply the `create-pet-record-job` component:
@@ -156,6 +118,8 @@ make k8s/pods
 
 create-pet-record-job-c4vm7                                 0/1     Completed   0          9m
 ```
+
+This can take anywhere from 10 to 20 minutes.
 
 ## Next
 [Submit the TF Job](submit_job.md)

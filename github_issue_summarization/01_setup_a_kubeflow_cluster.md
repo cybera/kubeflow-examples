@@ -85,12 +85,11 @@ Confirm you can see a dashboard.
 
 ## Launch a Jupyter Notebook;
 
-* Click on Notebooks.
+* Click on JupyterHub.
+* Type a random username and password. For example, `user1` and `password`.
 * Change the namespace to "kubeflow"
-* Click the +
-* Name the notebook something like `user1`
-* Choose the `tensorflow-1.12.0-notebook-gpu:v0.5.0` image.
-* Change CPU to 1
+* Choose the `tensorflow-1.12.0-notebook-gpu:v0.4.0` image.
+* Click Toggle Advanced
 * Change Memory to 2.0Gi
 * Set Extra Resources to `{"nvidia.com/gpu":"1"}`
 * Click Spawn
@@ -104,13 +103,13 @@ make k8s/pods
 You will initially see:
 
 ```
-user1-0                                                     0/1     ContainerCreating   0          30s
+jupyter-user1                                                     0/1     ContainerCreating   0          30s
 ```
 
 Wait until it's:
 
 ```
-user1-0                                                     1/1     Running   0          55s
+jupyter-user1                                                     1/1     Running   0          55s
 ```
 
 Then in the web browser, click the three dots under Actions and choose "Connect"

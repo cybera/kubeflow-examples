@@ -13,13 +13,9 @@ make k8s/pods
 make k8s/logs NAME=name-of-master-pod
 ```
 
-**NOTE:** When the job finishes, the pods will be automatically terminated. To see, run the `get pods` command with the `-a` flag:
+**NOTE:** When the job finishes, the pods will be automatically terminated.
 
-```
-kubectl -n kubeflow get pods -a
-```
-
-While the job is running, you should see something like this in your chief pod logs:
+While the job is running, you should see something like this in your master pod logs:
 
 ```
 INFO:tensorflow:Saving checkpoint to path /pets_data/train/model.ckpt
@@ -33,7 +29,7 @@ INFO:tensorflow:global step 834: loss = 0.2307 (16.493 sec/step)
 INFO:tensorflow:Recording summary at step 839
 ```
 
-When the job finishes, you should see something like this in your completed/terminated chief pod logs:
+When the job finishes, you should see something like this in your completed/terminated master pod logs:
 
 ```
 INFO:tensorflow:Starting Session.
@@ -48,9 +44,16 @@ INFO:tensorflow:Finished training! Saving model to disk.
 
 Now you have a trained model!! find it at `/pets_data/train` inside pvc `pets-pvc``.
 
+> Of course, it took approximately 500 hours.
+>
+> If you don't want to wait 500 hours, run the following and wait until you see a ckpt file other than `0`:
+>
+> kubectl -n kubeflow exec tf-training-job-master-0 -- ls /pets_data/train
+
 ### Delete job
+
 ```
-ks delete ${ENV} -c tf-training-job
+make pets/tf/delete
 ```
 
 ## Next

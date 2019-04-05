@@ -13,12 +13,18 @@ Reference
 
 > Note: If you have a limited amount of GPUs, you will need to delete some previous jobs before continuing:
 >
-> kubectl -n kubeflow delete job create-pet-record-job
-> kubectl -n kubeflow delete job export-tf-graph-job
 > kubectl -n kubeflow delete tfjob tf-training-job
 
 ```
-make tf/serve NAME=model1 MODEL_PATH=exported_graphs/frozen_inference_graph.pb PVC=pets-pvc
+make tf/serve NAME=model1 MODEL_PATH=exported_graphs PVC=pets-pvc
+```
+
+Wait until the model is running:
+
+```
+make k8s/pods
+
+model1-v1-754bff9578-bkv8b                                        2/2     Running     0          13m
 ```
 
 ## Send prediction
@@ -41,11 +47,8 @@ make forward/tf NAME=model1
 
 ```
 cd examples/object_detection/serving_script serving_script
-python predict.py --url=localhost:8000/model/coco:predict
+python3 predict.py --url=http://localhost:8000/model/model1:predict
 ```
-
-If you expose the TF Serving service as a LoadBalancer, change the url to
-`EXTERNAL_IP:8000/model/coco:predict`
 
 The script takes an input image (by default image1.jpg) and should save the result as `output.jpg`.
 The output image has the bounding boxes for detected objects.

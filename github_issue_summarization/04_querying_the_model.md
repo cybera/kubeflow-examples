@@ -16,7 +16,9 @@ Ensure that your model is live and listening for HTTP requests as described in
 
 ## Build the front-end docker image
 
-To build and serve the front-end docker image, issue the following commands:
+To serve the front-end docker image, issue the following commands:
+
+> You will need to generate a github token with no permissions enabled
 
 ```bash
 make github/ui/build TOKEN=<github token> DOCKER_USERNAME=username
@@ -25,10 +27,10 @@ make github/ui/build TOKEN=<github token> DOCKER_USERNAME=username
 ## View results from the frontend
 
 ```bash
-make forward/dashboard
+make github/ui/forward
 ```
 
-In a browser, navigate to `http://localhost:8080/issue-summarization/`, where
+In a browser, navigate to `http://localhost:8080/`, where
 you will be greeted by a basic website. Press the *Populate Random Issue*
 button, then click *Generate Title* to view
 a summary that was provided by your trained model.

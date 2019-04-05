@@ -35,7 +35,21 @@ Once you have identified the checkpoint next step is to configure the checkpoint
 make pets/model/export CHECKPOINT=model.ckpt-<number>
 ```
 
-Where `model.ckpt-<number>` is a vile under the `/pets_data/train` directory.
+Where `model.ckpt-<number>` is a file under the `/pets_data/train` directory.
+
+Wait until the job has finished:
+
+```
+make k8s/pods
+
+export-tf-graph-job-x9hk2                                         0/1     Completed   0          81s
+```
+
+Then run:
+
+```
+make pets/model/move
+```
 
 To see the default values and params of the `export-tf-graph-job` component look at: [params.libsonnet](./ks-app/components/params.libsonnet)
 

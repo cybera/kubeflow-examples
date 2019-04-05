@@ -39,7 +39,7 @@ The following files are needed for serving results:
 Issue the following command to place these three files into the `github_issue_summarization/notebooks` folder on your local machine:
 
 ```
-make github/model/download NAME=notebook-name
+make github/model/download
 ```
 
 _(Optional)_ You can also perform training with two alternate methods:

@@ -5,7 +5,7 @@
  - Docker Registry
  - Object Detection Training Docker Image
 
-Build the TensorFlow object detection training image, or use the pre-built image `lcastell/pets_object_detection` in Docker hub.
+Build the TensorFlow object detection training image, or use the pre-built image `lcastell/pets_object_detection` in Docker hub and skip this step.
 
 ## To build the image:
 

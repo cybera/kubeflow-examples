@@ -51,18 +51,28 @@ Now that you have seldon core deployed, you can deploy the model using the
 make github/model/serve-image DOCKER_USERNAME=username TAG=0.1
 ```
 
+Wait until the containers are Running before continuing:
+
+```
+make k8s/pods
+
+issue-summarization-issue-summarization-issue-summarizatio7z8xg   0/1     ContainerCreating   0          39s
+issue-summarization-issue-summarization-svc-orch-68ffb975fvmz92   1/1     Running             0          39s
+```
+
+
 # Sample request and response
 
 Seldon Core uses ambassador to route its requests. To send requests to the model, you can port-forward the ambassador container locally:
 
 ```
-make forward/dashboard
+make github/model/forward
 ```
 
 Then run:
 
 ```
-curl -X POST -H 'Content-Type: application/json' -d '{"data":{"ndarray":[["issue overview add a new property to disable detection of image stream files those ended with -is.yml from target directory. expected behaviour by default cube should not process image stream files if user does not set it. current behaviour cube always try to execute -is.yml files which can cause some problems in most of cases, for example if you are using kuberentes instead of openshift or if you use together fabric8 maven plugin with cube"]]}}' http://localhost:8080/seldon/issue-summarization/api/v0.1/predictions
+curl -X POST -H 'Content-Type: application/json' -d '{"data":{"ndarray":[["issue overview add a new property to disable detection of image stream files those ended with -is.yml from target directory. expected behaviour by default cube should not process image stream files if user does not set it. current behaviour cube always try to execute -is.yml files which can cause some problems in most of cases, for example if you are using kuberentes instead of openshift or if you use together fabric8 maven plugin with cube"]]}}' http://localhost:8080/api/v0.1/predictions
 ```
 
 Response
@@ -70,7 +80,7 @@ Response
 ```
 {
   "meta": {
-    "puid": "2rqt023g11gt7vfr0jnfkf1hsa",
+    "puid": "3s9395vs59i1upqbldu8ag59nv",
     "tags": {
     },
     "routing": {
@@ -78,7 +88,7 @@ Response
   },
   "data": {
     "names": ["t:0"],
-    "ndarray": [["add a new property"]]
+    "ndarray": [["add create a a a when when a"]]
   }
 }
 ```
